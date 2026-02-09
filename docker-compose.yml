@@ -1,0 +1,18 @@
+services:
+  aimage:
+    build: .
+    image: ghcr.io/fauxvo/aimage:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - aimage-data:/data
+      - aimage-images:/app/generated-images
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - APP_SECRET=${APP_SECRET:-}
+      - DATABASE_PATH=/data/sqlite.db
+    restart: unless-stopped
+
+volumes:
+  aimage-data:
+  aimage-images:

@@ -147,6 +147,64 @@ src/
 | GET    | `/api/settings`                               | Get app settings                 |
 | PATCH  | `/api/settings`                               | Update app settings              |
 
+## Docker
+
+### Quick Start
+
+```bash
+docker run -d \
+  -p 3000:3000 \
+  -v aimage-data:/data \
+  -v aimage-images:/app/generated-images \
+  -e OPENAI_API_KEY=sk-... \
+  ghcr.io/fauxvo/aimage:latest
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+### Docker Compose
+
+```bash
+# Create .env with your API key
+echo "OPENAI_API_KEY=sk-..." > .env
+
+docker compose up -d
+```
+
+### Build Locally
+
+```bash
+docker build -t aimage .
+docker compose up -d
+```
+
+### Volumes
+
+| Mount                   | Description           |
+| ----------------------- | --------------------- |
+| `/data`                 | SQLite database       |
+| `/app/generated-images` | Generated image files |
+
+### Environment Variables
+
+| Variable         | Default           | Description                                    |
+| ---------------- | ----------------- | ---------------------------------------------- |
+| `OPENAI_API_KEY` | -                 | OpenAI API key (or set via Settings UI)        |
+| `APP_SECRET`     | -                 | Enables AES-256-GCM encryption for stored keys |
+| `DATABASE_PATH`  | `/data/sqlite.db` | Path to SQLite database file                   |
+
+Database migrations run automatically on container startup.
+
+## Unraid
+
+1. In the Unraid Docker tab, click **Add Container** > **Template Repositories**
+2. Add: `https://github.com/fauxvo/AImage`
+3. Select the **AImage** template
+4. Set your OpenAI API key (or configure later in the Settings UI)
+5. Click **Apply**
+
+The WebUI link auto-populates in the Unraid Docker UI.
+
 ## Testing
 
 173 tests across 19 test files covering lib modules, API routes, hooks, and components:

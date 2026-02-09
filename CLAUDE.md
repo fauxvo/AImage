@@ -123,3 +123,12 @@ Husky runs `prettier --check` and `eslint` on commit. Run `bun run format` befor
 
 - `@typescript-eslint/no-explicit-any` is disabled in test files and `src/test/`
 - `@next/next/no-img-element` warnings on `<img>` tags are expected (dynamically served images)
+
+## Docker
+
+- `output: 'standalone'` in `next.config.ts` for containerized builds
+- `docker-entrypoint.sh` runs `drizzle-kit push --force` for auto-migration on startup
+- Volumes: `/data` (SQLite DB), `/app/generated-images` (image storage)
+- `DATABASE_PATH` defaults to `/data/sqlite.db` in Docker
+- GitHub Actions publishes to `ghcr.io/fauxvo/aimage` on push to `main` or `v*` tags
+- Unraid template at `unraid/aimage.xml`
