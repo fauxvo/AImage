@@ -7,15 +7,17 @@ import { desc } from "drizzle-orm";
 import crypto from "crypto";
 
 export async function GET() {
-  const sets = await db
-    .select()
-    .from(imageSets)
-    .orderBy(desc(imageSets.createdAt));
+  const sets = await db.select().from(imageSets).orderBy(desc(imageSets.createdAt));
   return NextResponse.json(sets);
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
   const parsed = createImageSetSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues }, { status: 400 });

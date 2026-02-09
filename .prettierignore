@@ -1,0 +1,9 @@
+.next
+.claude
+node_modules
+bun.lock
+drizzle
+generated-images
+sqlite.db
+sqlite.db-shm
+sqlite.db-wal

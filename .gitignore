@@ -39,6 +39,8 @@ yarn-error.log*
 # project-specific
 generated-images/
 sqlite.db
+sqlite.db-shm
+sqlite.db-wal
 
 # typescript
 *.tsbuildinfo

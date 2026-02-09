@@ -1,19 +1,16 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import {
+  sseProgressSchema,
+  sseImageSavedSchema,
+  sseWarningSchema,
+  sseErrorSchema,
+  type SSEProgress,
+  type SSEImageSaved,
+} from "@/lib/validations";
 
 export type GenerationStatus = "idle" | "generating" | "complete" | "error";
-
-interface GenerationProgress {
-  current: number;
-  total: number;
-  status: string;
-}
-
-interface GeneratedImage {
-  id: string;
-  fileName: string;
-}
 
 interface SSEEvent {
   event: string;
@@ -22,10 +19,63 @@ interface SSEEvent {
 
 export function useGeneration(imageSetId: string) {
   const [status, setStatus] = useState<GenerationStatus>("idle");
-  const [progress, setProgress] = useState<GenerationProgress | null>(null);
+  const [progress, setProgress] = useState<SSEProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [newImages, setNewImages] = useState<GeneratedImage[]>([]);
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const [newImages, setNewImages] = useState<SSEImageSaved["image"][]>([]);
   const abortRef = useRef<AbortController | null>(null);
+  const completeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Store handleSSEEvent in a ref so the generate callback always calls the latest version
+  const handleSSEEventRef = useRef<(evt: SSEEvent) => void>(() => {});
+  handleSSEEventRef.current = ({ event, data }: SSEEvent) => {
+    try {
+      switch (event) {
+        case "started":
+          setStatus("generating");
+          break;
+        case "progress": {
+          const p = sseProgressSchema.parse(data);
+          setProgress({ current: p.current, total: p.total, status: p.status });
+          break;
+        }
+        case "image_saved": {
+          const saved = sseImageSavedSchema.parse(data);
+          setNewImages((prev) => [...prev, saved.image]);
+          break;
+        }
+        case "complete":
+          setStatus("complete");
+          break;
+        case "warning": {
+          const w = sseWarningSchema.parse(data);
+          setWarnings((prev) => [...prev, w.message]);
+          break;
+        }
+        case "error": {
+          const e = sseErrorSchema.parse(data);
+          setStatus("error");
+          setError(e.message);
+          break;
+        }
+      }
+    } catch {
+      // Skip malformed SSE events that fail Zod validation
+    }
+  };
+
+  // Auto-dismiss "complete" status after 5 seconds
+  useEffect(() => {
+    if (status === "complete") {
+      completeTimerRef.current = setTimeout(() => setStatus("idle"), 5000);
+    }
+    return () => {
+      if (completeTimerRef.current) {
+        clearTimeout(completeTimerRef.current);
+        completeTimerRef.current = null;
+      }
+    };
+  }, [status]);
 
   const generate = useCallback(async () => {
     // Abort any in-progress generation
@@ -36,6 +86,7 @@ export function useGeneration(imageSetId: string) {
     setStatus("generating");
     setProgress(null);
     setError(null);
+    setWarnings([]);
     setNewImages([]);
 
     try {
@@ -69,7 +120,7 @@ export function useGeneration(imageSetId: string) {
           } else if (line.startsWith("data: ")) {
             try {
               const data = JSON.parse(line.slice(6));
-              handleSSEEvent({ event: currentEvent, data });
+              handleSSEEventRef.current({ event: currentEvent, data });
             } catch {
               // skip malformed data
             }
@@ -83,38 +134,10 @@ export function useGeneration(imageSetId: string) {
     }
   }, [imageSetId]);
 
-  function handleSSEEvent({ event, data }: SSEEvent) {
-    switch (event) {
-      case "started":
-        setStatus("generating");
-        break;
-      case "progress":
-        setProgress({
-          current: data.current as number,
-          total: data.total as number,
-          status: data.status as string,
-        });
-        break;
-      case "image_saved":
-        setNewImages((prev) => [
-          ...prev,
-          data.image as GeneratedImage,
-        ]);
-        break;
-      case "complete":
-        setStatus("complete");
-        break;
-      case "error":
-        setStatus("error");
-        setError(data.message as string);
-        break;
-    }
-  }
-
   const cancel = useCallback(() => {
     abortRef.current?.abort();
     setStatus("idle");
   }, []);
 
-  return { status, progress, error, newImages, generate, cancel };
+  return { status, progress, error, warnings, newImages, generate, cancel };
 }

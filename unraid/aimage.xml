@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>AImage</Name>
+  <Repository>ghcr.io/fauxvo/aimage:latest</Repository>
+  <Registry>https://ghcr.io/fauxvo/aimage</Registry>
+  <Branch>
+    <Tag>latest</Tag>
+    <TagDescription>Latest stable release</TagDescription>
+  </Branch>
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/fauxvo/AImage/issues</Support>
+  <Project>https://github.com/fauxvo/AImage</Project>
+  <Overview>AI-powered image generation app using OpenAI models (GPT-image-1, DALL-E 3, DALL-E 2). Features reference images, AI prompt refinement, style controls, image optimization, and real-time generation progress.</Overview>
+  <Category>Productivity: MediaApp:Photos</Category>
+  <WebUI>http://[IP]:[PORT:3000]</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/fauxvo/AImage/main/unraid/aimage.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/fauxvo/AImage/main/public/icon.png</Icon>
+  <ExtraParams/>
+  <DateInstalled/>
+  <Description>AI-powered image generation app using OpenAI models (GPT-image-1, DALL-E 3, DALL-E 2). Features reference images, AI prompt refinement, style controls, image optimization, and real-time generation progress.</Description>
+  <Config Name="WebUI Port" Target="3000" Default="3000" Mode="tcp" Description="Web interface port" Type="Port" Display="always" Required="true" Mask="false">3000</Config>
+  <Config Name="Database" Target="/data" Default="/mnt/user/appdata/aimage/data" Mode="rw" Description="Database storage" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/aimage/data</Config>
+  <Config Name="Generated Images" Target="/app/generated-images" Default="/mnt/user/appdata/aimage/images" Mode="rw" Description="Generated image storage" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/aimage/images</Config>
+  <Config Name="OpenAI API Key" Target="OPENAI_API_KEY" Default="" Mode="" Description="Your OpenAI API key (or set via Settings UI)" Type="Variable" Display="always" Required="false" Mask="true"/>
+  <Config Name="App Secret" Target="APP_SECRET" Default="" Mode="" Description="Optional secret for encrypting stored API keys (AES-256-GCM)" Type="Variable" Display="always" Required="false" Mask="true"/>
+  <Config Name="Database Path" Target="DATABASE_PATH" Default="/data/sqlite.db" Mode="" Description="Path to SQLite database file inside container" Type="Variable" Display="advanced" Required="false" Mask="false">/data/sqlite.db</Config>
+</Container>
