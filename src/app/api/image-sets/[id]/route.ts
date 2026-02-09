@@ -1,20 +1,17 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { imageSets, generatedImages } from "@/db/schema";
+import { imageSets, generatedImages, referenceImages } from "@/db/schema";
 import { updateImageSetSchema } from "@/lib/validations";
 import { removeImageSetDir } from "@/lib/paths";
 import { eq, desc } from "drizzle-orm";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+function safeJsonParse(request: Request) {
+  return request.json().catch(() => null);
+}
+
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const imageSet = await db
-    .select()
-    .from(imageSets)
-    .where(eq(imageSets.id, id))
-    .get();
+  const imageSet = await db.select().from(imageSets).where(eq(imageSets.id, id)).get();
 
   if (!imageSet) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -26,25 +23,33 @@ export async function GET(
     .where(eq(generatedImages.imageSetId, id))
     .orderBy(desc(generatedImages.createdAt));
 
-  return NextResponse.json({ ...imageSet, images });
+  const refs = await db
+    .select()
+    .from(referenceImages)
+    .where(eq(referenceImages.imageSetId, id))
+    .orderBy(desc(referenceImages.createdAt));
+
+  // Strip absolute filePath from client responses
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const safeImages = images.map(({ filePath, ...rest }) => rest);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const safeRefs = refs.map(({ filePath, ...rest }) => rest);
+
+  return NextResponse.json({ ...imageSet, images: safeImages, referenceImages: safeRefs });
 }
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const body = await request.json();
+  const body = await safeJsonParse(request);
+  if (body === null) {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
   const parsed = updateImageSetSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues }, { status: 400 });
   }
 
-  const existing = await db
-    .select()
-    .from(imageSets)
-    .where(eq(imageSets.id, id))
-    .get();
+  const existing = await db.select().from(imageSets).where(eq(imageSets.id, id)).get();
 
   if (!existing) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -59,26 +64,22 @@ export async function PATCH(
   return NextResponse.json(updated);
 }
 
-export async function DELETE(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const existing = await db
-    .select()
-    .from(imageSets)
-    .where(eq(imageSets.id, id))
-    .get();
+  const existing = await db.select().from(imageSets).where(eq(imageSets.id, id)).get();
 
   if (!existing) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // Delete images from DB first (cascade should handle, but be explicit)
-  await db.delete(generatedImages).where(eq(generatedImages.imageSetId, id));
-  await db.delete(imageSets).where(eq(imageSets.id, id));
+  // Delete related records atomically (cascade should handle, but be explicit)
+  await db.transaction(async (tx) => {
+    await tx.delete(referenceImages).where(eq(referenceImages.imageSetId, id));
+    await tx.delete(generatedImages).where(eq(generatedImages.imageSetId, id));
+    await tx.delete(imageSets).where(eq(imageSets.id, id));
+  });
 
-  // Remove the asset folder
+  // Remove the asset folder (outside transaction — filesystem is not transactional)
   removeImageSetDir(id);
 
   return NextResponse.json({ success: true });

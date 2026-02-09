@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 interface ImageItem {
   id: string;
@@ -13,6 +13,14 @@ interface ImageGridProps {
   images: ImageItem[];
   imageSetId: string;
   onOpenFolder: () => void;
+  onOptimized?: () => void;
+}
+
+interface OptimizeResult {
+  originalSize: number;
+  optimizedSize: number;
+  savings: number;
+  fileName: string;
 }
 
 function formatDate(ts: number) {
@@ -34,7 +42,6 @@ function groupByBatch(images: ImageItem[]) {
   let batchTime = images[0].createdAt;
 
   for (let i = 1; i < images.length; i++) {
-    // Images are sorted newest-first; within a batch timestamps are close
     if (Math.abs(images[i].createdAt - batchTime) < 60_000) {
       currentBatch.push(images[i]);
     } else {
@@ -51,21 +58,100 @@ function getFullUrl(path: string) {
   return `${window.location.origin}${path}`;
 }
 
-export function ImageGrid({ images, imageSetId, onOpenFolder }: ImageGridProps) {
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
+export function ImageGrid({ images, imageSetId, onOpenFolder, onOptimized }: ImageGridProps) {
+  const [lightboxImg, setLightboxImg] = useState<ImageItem | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [optimizing, setOptimizing] = useState(false);
+  const [optimizeResult, setOptimizeResult] = useState<OptimizeResult | null>(null);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const lightboxUrl = lightboxImg ? `/api/images/${imageSetId}/${lightboxImg.fileName}` : null;
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    };
+  }, []);
+
+  const openLightbox = useCallback((img: ImageItem) => {
+    setLightboxImg(img);
+    setOptimizeResult(null);
+  }, []);
+
+  const closeLightbox = useCallback(() => {
+    setLightboxImg(null);
+    setOptimizeResult(null);
+  }, []);
+
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (!lightboxImg) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        closeLightbox();
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        const idx = images.findIndex((img) => img.id === lightboxImg!.id);
+        if (idx < images.length - 1) {
+          setLightboxImg(images[idx + 1]);
+          setOptimizeResult(null);
+        }
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        const idx = images.findIndex((img) => img.id === lightboxImg!.id);
+        if (idx > 0) {
+          setLightboxImg(images[idx - 1]);
+          setOptimizeResult(null);
+        }
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lightboxImg, images, closeLightbox]);
 
   async function copyUrl(e: React.MouseEvent, url: string, id: string) {
     e.stopPropagation();
     await navigator.clipboard.writeText(getFullUrl(url));
     setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 1500);
+    if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    copiedTimerRef.current = setTimeout(() => setCopiedId(null), 1500);
+  }
+
+  async function optimizeImage(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!lightboxImg || optimizing) return;
+
+    if (lightboxImg.fileName.includes("_optimized")) return;
+
+    setOptimizing(true);
+    setOptimizeResult(null);
+    try {
+      const res = await fetch(`/api/images/${imageSetId}/${lightboxImg.fileName}/optimize`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        const result: OptimizeResult = await res.json();
+        setOptimizeResult(result);
+        onOptimized?.();
+      }
+    } finally {
+      setOptimizing(false);
+    }
   }
 
   if (images.length === 0) {
     return (
-      <div className="text-center py-12 text-muted text-sm">
-        No images generated yet. Write a prompt and click Generate.
+      <div className="py-16 text-center">
+        <div className="text-muted/40 mb-3 text-4xl" aria-hidden="true">
+          &#x1f3a8;
+        </div>
+        <p className="text-muted text-sm">No images generated yet.</p>
+        <p className="text-muted/60 mt-1 text-xs">Write a prompt above and click Generate.</p>
       </div>
     );
   }
@@ -74,53 +160,98 @@ export function ImageGrid({ images, imageSetId, onOpenFolder }: ImageGridProps) 
 
   return (
     <>
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-medium">
-          {images.length} image{images.length !== 1 ? "s" : ""} across{" "}
-          {batches.length} generation{batches.length !== 1 ? "s" : ""}
-        </span>
+      {/* Header bar */}
+      <div className="mb-5 flex items-center justify-between">
+        <div>
+          <span className="text-sm font-semibold tracking-tight">
+            {images.length} image{images.length !== 1 ? "s" : ""}
+          </span>
+          <span className="text-muted ml-2 text-xs">
+            across {batches.length} generation{batches.length !== 1 ? "s" : ""}
+          </span>
+        </div>
         <button
           onClick={onOpenFolder}
-          className="px-3 py-1.5 border border-sidebar-border rounded-md text-xs hover:bg-sidebar-border/30 transition-colors cursor-pointer"
+          className="border-sidebar-border/60 text-muted hover:text-foreground hover:border-sidebar-border cursor-pointer rounded-lg border px-3 py-1.5 text-xs transition-all active:scale-95"
         >
           Open Folder
         </button>
       </div>
 
-      <div className="space-y-4">
+      {/* Batch groups */}
+      <div className="space-y-8">
         {batches.map((batch, batchIdx) => (
           <div key={batch.timestamp}>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs text-muted">
+            {/* Batch header */}
+            <div className="mb-4 flex items-center gap-3">
+              <span className="text-foreground/80 text-sm font-medium">
                 {formatDate(batch.timestamp)}
               </span>
               {batchIdx === 0 && batches.length > 1 && (
-                <span className="text-[10px] px-1.5 py-0.5 bg-accent/10 text-accent rounded-full font-medium">
+                <span className="border-accent/20 bg-accent/5 text-accent rounded-full border px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase">
                   Latest
                 </span>
               )}
-              <span className="text-xs text-muted">
-                ({batch.images.length} image{batch.images.length !== 1 ? "s" : ""})
+              <span className="text-muted/60 text-xs">
+                {batch.images.length} image{batch.images.length !== 1 ? "s" : ""}
               </span>
+              <div className="border-sidebar-border/40 flex-1 border-b" />
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {batch.images.map((img) => {
+
+            {/* Image grid */}
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {batch.images.map((img, imgIdx) => {
                 const url = `/api/images/${imageSetId}/${img.fileName}`;
+                const isOptimized = img.fileName.includes("_optimized");
                 return (
                   <div
                     key={img.id}
-                    onClick={() => setLightboxUrl(url)}
-                    className="group/img relative aspect-square rounded-lg overflow-hidden bg-sidebar-border/30 cursor-pointer hover:ring-2 hover:ring-accent/50 transition-all"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openLightbox(img)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        openLightbox(img);
+                      }
+                    }}
+                    aria-label={`View ${isOptimized ? "optimized" : "generated"} image`}
+                    className="group/img hover:border-accent/20 relative cursor-pointer overflow-hidden rounded-xl border border-transparent shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+                    style={{ animationDelay: `${imgIdx * 50}ms` }}
                   >
-                    <img
-                      src={url}
-                      alt="Generated"
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
+                    <div className="bg-sidebar-border/20 aspect-square overflow-hidden">
+                      <img
+                        src={url}
+                        alt={isOptimized ? "Optimized" : "Generated"}
+                        className="img-fade-in h-full w-full object-cover transition-transform duration-500 group-hover/img:scale-105"
+                        loading="lazy"
+                      />
+                    </div>
+
+                    {/* Gradient overlay on hover */}
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover/img:opacity-100" />
+
+                    {/* Optimized badge */}
+                    {isOptimized && (
+                      <span className="absolute bottom-2.5 left-2.5 flex items-center gap-1 rounded-full bg-emerald-500/90 px-2 py-1 text-[11px] font-semibold tracking-wide text-white shadow-lg backdrop-blur-md">
+                        <svg
+                          width="10"
+                          height="10"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Optimized
+                      </span>
+                    )}
+
+                    {/* Copy URL button */}
                     <button
                       onClick={(e) => copyUrl(e, url, img.id)}
-                      className="absolute top-1.5 right-1.5 opacity-0 group-hover/img:opacity-100 px-2 py-1 bg-black/70 text-white rounded text-[10px] font-medium hover:bg-black/90 transition-all cursor-pointer"
+                      className="absolute top-2.5 right-2.5 cursor-pointer rounded-lg border border-white/20 bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white opacity-0 shadow-lg backdrop-blur-md transition-all duration-200 group-hover/img:opacity-100 hover:bg-white/20 active:scale-95"
                       title="Copy image URL"
                     >
                       {copiedId === img.id ? "Copied!" : "Copy URL"}
@@ -133,35 +264,76 @@ export function ImageGrid({ images, imageSetId, onOpenFolder }: ImageGridProps) 
         ))}
       </div>
 
-      {lightboxUrl && (
+      {/* Lightbox */}
+      {lightboxUrl && lightboxImg && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-          onClick={() => setLightboxUrl(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Image lightbox"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md"
+          onClick={closeLightbox}
         >
-          <div className="relative max-w-[90vw] max-h-[90vh]">
+          {/* Close button */}
+          <button
+            onClick={closeLightbox}
+            className="absolute top-5 right-5 z-10 cursor-pointer rounded-full bg-white/10 p-2.5 text-white/70 backdrop-blur-md transition-all hover:bg-white/20 hover:text-white active:scale-95"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+
+          <div className="relative max-h-[90vh] max-w-[90vw]" onClick={(e) => e.stopPropagation()}>
             <img
               src={lightboxUrl}
               alt="Generated (full size)"
-              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+              className="max-h-[85vh] max-w-full rounded-2xl object-contain shadow-2xl"
             />
-            <div
-              className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={(e) => copyUrl(e, lightboxUrl, "lightbox")}
-                className="px-3 py-1.5 bg-black/70 text-white rounded-md text-xs font-medium hover:bg-black/90 transition-colors cursor-pointer backdrop-blur-sm"
-              >
-                {copiedId === "lightbox" ? "Copied!" : "Copy URL"}
-              </button>
-              <a
-                href={lightboxUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3 py-1.5 bg-black/70 text-white rounded-md text-xs font-medium hover:bg-black/90 transition-colors cursor-pointer backdrop-blur-sm"
-              >
-                Open in Tab
-              </a>
+
+            {/* Bottom control bar */}
+            <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3">
+              {/* Optimize result banner */}
+              {optimizeResult && (
+                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/90 px-4 py-2.5 text-center text-xs font-semibold text-white shadow-xl backdrop-blur-md">
+                  Optimized! {formatBytes(optimizeResult.originalSize)} &rarr;{" "}
+                  {formatBytes(optimizeResult.optimizedSize)} ({optimizeResult.savings}% smaller)
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex gap-2 rounded-2xl border border-white/10 bg-black/60 p-2 shadow-2xl backdrop-blur-xl">
+                <button
+                  onClick={(e) => copyUrl(e, lightboxUrl, "lightbox")}
+                  className="cursor-pointer rounded-xl bg-white/10 px-4 py-2 text-xs font-medium text-white transition-all hover:bg-white/20 active:scale-95"
+                >
+                  {copiedId === "lightbox" ? "Copied!" : "Copy URL"}
+                </button>
+                <a
+                  href={lightboxUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cursor-pointer rounded-xl bg-white/10 px-4 py-2 text-xs font-medium text-white transition-all hover:bg-white/20 active:scale-95"
+                >
+                  Open in Tab
+                </a>
+                {!lightboxImg.fileName.includes("_optimized") && (
+                  <button
+                    onClick={optimizeImage}
+                    disabled={optimizing}
+                    className="cursor-pointer rounded-xl bg-emerald-500/80 px-4 py-2 text-xs font-medium text-white transition-all hover:bg-emerald-500 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {optimizing ? "Optimizing..." : optimizeResult ? "Optimized!" : "Optimize"}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
 
 const BASE_DIR = path.resolve(process.cwd(), "generated-images");
 
@@ -37,6 +38,13 @@ export function getImageFilePath(imageSetId: string, fileName: string): string {
     throw new Error("Invalid file name: path traversal detected");
   }
   return filePath;
+}
+
+/** Generate a unique filename for a reference image, preserving extension */
+export function getReferenceImageFileName(originalName: string): string {
+  const ext = path.extname(originalName).toLowerCase() || ".png";
+  const random = crypto.randomBytes(4).toString("hex");
+  return `ref-${Date.now()}-${random}${ext}`;
 }
 
 /** Remove an image set's directory and all files within it */
