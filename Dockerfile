@@ -59,6 +59,10 @@ ENV NODE_ENV=production
 # Volumes for persistent data
 VOLUME ["/data", "/app/generated-images"]
 
+# Unraid labels
+LABEL net.unraid.docker.webui="http://[IP]:[PORT:3000]"
+LABEL net.unraid.docker.icon="https://raw.githubusercontent.com/fauxvo/AImage/main/public/icon.png"
+
 EXPOSE 3000
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
