@@ -1,0 +1,63 @@
+/*
+ * AImage Theme — Zinc + Emerald
+ *
+ * To change the theme, edit the color values below.
+ * All components reference these tokens via Tailwind classes
+ * (e.g. bg-accent, text-ink, border-edge).
+ *
+ * Token reference:
+ *   Surfaces:  studio, surface, surface-hover, inset
+ *   Text:      ink, ink-secondary, ink-faint
+ *   Structure: edge, edge-strong
+ *   Accent:    accent, accent-hover
+ *   Semantic:  success, error, warning
+ */
+
+:root {
+  /* Surfaces */
+  --studio: #fafaf9;
+  --surface: #ffffff;
+  --surface-hover: #f4f4f5;
+  --inset: #f0f0f1;
+
+  /* Text */
+  --ink: #18181b;
+  --ink-secondary: #71717a;
+  --ink-faint: #a1a1aa;
+
+  /* Structure */
+  --edge: #e4e4e7;
+  --edge-strong: #d4d4d8;
+
+  /* Accent */
+  --accent: #059669;
+  --accent-hover: #047857;
+
+  /* Semantic */
+  --success: #16a34a;
+  --error: #dc2626;
+  --warning: #d97706;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --studio: #09090b;
+    --surface: #18181b;
+    --surface-hover: #27272a;
+    --inset: #111113;
+
+    --ink: #fafafa;
+    --ink-secondary: #a1a1aa;
+    --ink-faint: #71717a;
+
+    --edge: #27272a;
+    --edge-strong: #3f3f46;
+
+    --accent: #34d399;
+    --accent-hover: #6ee7b7;
+
+    --success: #4ade80;
+    --error: #f87171;
+    --warning: #fbbf24;
+  }
+}

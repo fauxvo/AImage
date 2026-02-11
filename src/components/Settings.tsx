@@ -135,10 +135,10 @@ export function Settings() {
     return (
       <div className="mx-auto max-w-2xl p-8">
         <div className="space-y-6">
-          <div className="bg-sidebar-border/50 h-8 w-32 animate-pulse rounded" />
-          <div className="bg-sidebar-border/50 h-24 animate-pulse rounded-lg" />
-          <div className="bg-sidebar-border/50 h-32 animate-pulse rounded-lg" />
-          <div className="bg-sidebar-border/50 h-32 animate-pulse rounded-lg" />
+          <div className="bg-edge/40 h-8 w-32 animate-pulse rounded" />
+          <div className="bg-edge/40 h-24 animate-pulse rounded-xl" />
+          <div className="bg-edge/40 h-32 animate-pulse rounded-xl" />
+          <div className="bg-edge/40 h-32 animate-pulse rounded-xl" />
         </div>
       </div>
     );
@@ -161,11 +161,11 @@ export function Settings() {
       )}
 
       {/* Auto-Optimize Toggle */}
-      <div className="bg-card-bg border-sidebar-border mb-6 rounded-lg border p-6">
+      <div className="border-edge bg-surface mb-6 rounded-xl border p-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold">Auto-Optimize Images</h2>
-            <p className="text-muted mt-1 text-sm">
+            <p className="text-ink-secondary mt-1 text-sm">
               Automatically create an optimized WebP version of each generated image. This reduces
               file sizes by ~30% while maintaining visual quality.
             </p>
@@ -177,7 +177,7 @@ export function Settings() {
             onClick={toggleAutoOptimize}
             disabled={saving}
             className={`relative ml-4 inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
-              autoOptimize ? "bg-accent" : "bg-sidebar-border"
+              autoOptimize ? "bg-accent" : "bg-edge"
             }`}
           >
             <span
@@ -190,7 +190,7 @@ export function Settings() {
       </div>
 
       {/* Model Selection */}
-      <div className="bg-card-bg border-sidebar-border mb-6 rounded-lg border p-6">
+      <div className="border-edge bg-surface mb-6 rounded-xl border p-6">
         <h2 className="mb-4 text-lg font-semibold">Models</h2>
 
         {/* Chat Model */}
@@ -198,13 +198,15 @@ export function Settings() {
           <label htmlFor="chat-model-select" className="mb-1 block text-sm font-medium">
             Chat Model
           </label>
-          <p className="text-muted mb-2 text-xs">Used for prompt refinement and text tasks.</p>
+          <p className="text-ink-secondary mb-2 text-xs">
+            Used for prompt refinement and text tasks.
+          </p>
           <select
             id="chat-model-select"
             value={chatModel}
             onChange={(e) => handleChatModelChange(e.target.value)}
             disabled={saving}
-            className="bg-background border-sidebar-border focus:border-accent w-full cursor-pointer rounded-lg border px-3 py-2 text-sm focus:outline-none"
+            className="border-edge bg-inset focus:border-accent w-full cursor-pointer rounded-lg border px-3 py-2 text-sm focus:outline-none"
           >
             {CHAT_MODELS.map((m) => (
               <option key={m.value} value={m.value}>
@@ -219,13 +221,15 @@ export function Settings() {
           <label htmlFor="image-model-select" className="mb-1 block text-sm font-medium">
             Image Generation Model
           </label>
-          <p className="text-muted mb-2 text-xs">Used for generating images from prompts.</p>
+          <p className="text-ink-secondary mb-2 text-xs">
+            Used for generating images from prompts.
+          </p>
           <select
             id="image-model-select"
             value={imageModel}
             onChange={(e) => handleImageModelChange(e.target.value)}
             disabled={saving}
-            className="bg-background border-sidebar-border focus:border-accent w-full cursor-pointer rounded-lg border px-3 py-2 text-sm focus:outline-none"
+            className="border-edge bg-inset focus:border-accent w-full cursor-pointer rounded-lg border px-3 py-2 text-sm focus:outline-none"
           >
             {IMAGE_MODELS.map((m) => (
               <option key={m.value} value={m.value}>
@@ -236,7 +240,7 @@ export function Settings() {
             ))}
           </select>
           {IMAGE_MODELS.find((m) => m.value === imageModel && "deprecated" in m) && (
-            <div className="mt-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-sm text-amber-600 dark:text-amber-400">
+            <div className="border-warning/20 bg-warning/5 text-warning mt-2 rounded-lg border p-3 text-sm">
               This model is deprecated and will be removed on 05/12/2026. Only 1024x1024 size is
               supported. Consider switching to a GPT Image model for the best results.
             </div>
@@ -245,11 +249,11 @@ export function Settings() {
       </div>
 
       {/* OpenAI API Key */}
-      <div className="bg-card-bg border-sidebar-border rounded-lg border p-6">
+      <div className="border-edge bg-surface rounded-xl border p-6">
         <h2 className="text-lg font-semibold">OpenAI API Key</h2>
-        <p className="text-muted mt-1 mb-4 text-sm">
+        <p className="text-ink-secondary mt-1 mb-4 text-sm">
           Set a custom OpenAI API key. This overrides the key from your{" "}
-          <code className="bg-sidebar-border/50 rounded px-1 py-0.5 text-xs">.env.local</code> file.
+          <code className="bg-edge/50 rounded px-1 py-0.5 text-xs">.env.local</code> file.
         </p>
 
         {/* Status indicator */}
@@ -259,7 +263,7 @@ export function Settings() {
               hasCustomKey ? "bg-accent" : data?.hasEnvKey ? "bg-success" : "bg-error"
             }`}
           />
-          <span className="text-muted">
+          <span className="text-ink-secondary">
             {hasCustomKey
               ? `Using custom key (${data?.settings.openai_api_key})`
               : data?.hasEnvKey
@@ -275,11 +279,11 @@ export function Settings() {
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder={hasCustomKey ? "Enter new key to replace" : "sk-..."}
-              className="bg-background border-sidebar-border focus:border-accent w-full rounded-lg border px-3 py-2 pr-10 text-sm focus:outline-none"
+              className="border-edge bg-inset placeholder:text-ink-faint focus:border-accent w-full rounded-lg border px-3 py-2 pr-10 text-sm focus:outline-none"
             />
             <button
               onClick={() => setShowKey(!showKey)}
-              className="text-muted hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2 cursor-pointer p-1"
+              className="text-ink-faint hover:text-ink absolute top-1/2 right-2 -translate-y-1/2 cursor-pointer p-1"
               title={showKey ? "Hide" : "Show"}
             >
               {showKey ? (
@@ -324,7 +328,7 @@ export function Settings() {
               setApiKey("");
               saveApiKey("");
             }}
-            className="text-muted hover:text-error mt-3 cursor-pointer text-sm transition-colors"
+            className="text-ink-faint hover:text-error mt-3 cursor-pointer text-sm transition-colors"
           >
             Remove custom key and use .env.local
           </button>

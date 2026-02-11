@@ -190,20 +190,23 @@ export function ImageSetView({ id }: { id: string }) {
   if (loading) {
     return (
       <div className="space-y-4 p-8">
-        <div className="bg-sidebar-border/50 h-8 w-48 animate-pulse rounded" />
-        <div className="bg-sidebar-border/50 h-24 animate-pulse rounded-lg" />
-        <div className="bg-sidebar-border/50 h-12 animate-pulse rounded-lg" />
+        <div className="bg-edge/40 h-8 w-48 animate-pulse rounded" />
+        <div className="bg-edge/40 h-24 animate-pulse rounded-xl" />
+        <div className="bg-edge/40 h-12 animate-pulse rounded-xl" />
       </div>
     );
   }
 
   if (!data) return null;
 
+  const selectClass =
+    "w-full cursor-pointer rounded-lg border border-edge bg-inset px-3 py-2 text-sm focus:border-accent focus:outline-none";
+
   return (
     <div className="mx-auto max-w-4xl p-8">
       {/* Update error toast */}
       {updateError && (
-        <div className="bg-error/10 border-error/20 text-error mb-4 rounded-lg border p-3 text-sm">
+        <div className="border-error/20 bg-error/10 text-error mb-4 rounded-lg border p-3 text-sm">
           {updateError}
         </div>
       )}
@@ -241,7 +244,7 @@ export function ImageSetView({ id }: { id: string }) {
             </h1>
             <button
               onClick={() => setEditingName(true)}
-              className="text-muted hover:text-accent cursor-pointer p-1 opacity-0 transition-all group-hover:opacity-100"
+              className="text-ink-faint hover:text-accent cursor-pointer p-1 opacity-0 transition-all group-hover:opacity-100"
               title="Rename"
             >
               <svg
@@ -260,7 +263,7 @@ export function ImageSetView({ id }: { id: string }) {
       </div>
 
       {/* Prompt Section */}
-      <div className="bg-card-bg border-sidebar-border/50 mb-6 rounded-xl border p-6 shadow-sm">
+      <div className="border-edge bg-surface mb-6 rounded-xl border p-6">
         <PromptEditor
           imageSetId={id}
           prompt={data.prompt}
@@ -298,7 +301,7 @@ export function ImageSetView({ id }: { id: string }) {
       </div>
 
       {/* Reference Images */}
-      <div className="bg-card-bg border-sidebar-border/50 mb-6 rounded-xl border p-6 shadow-sm">
+      <div className="border-edge bg-surface mb-6 rounded-xl border p-6">
         <ReferenceImages
           imageSetId={id}
           referenceImages={data.referenceImages ?? []}
@@ -308,20 +311,20 @@ export function ImageSetView({ id }: { id: string }) {
       </div>
 
       {/* Generation Controls */}
-      <div className="bg-card-bg border-sidebar-border/50 mb-6 rounded-xl border p-6 shadow-sm">
-        <h2 className="text-foreground/80 mb-3 text-xs font-semibold tracking-wider uppercase">
+      <div className="border-edge bg-surface mb-6 rounded-xl border p-6">
+        <h2 className="text-ink-secondary mb-3 text-xs font-semibold tracking-wider uppercase">
           Generation Settings
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
-            <label htmlFor="size-select" className="text-muted mb-1 block text-xs">
+            <label htmlFor="size-select" className="text-ink-secondary mb-1 block text-xs">
               Size
             </label>
             <select
               id="size-select"
               value={data.size}
               onChange={(e) => updateImageSet({ size: e.target.value })}
-              className="bg-background border-sidebar-border w-full cursor-pointer rounded-md border px-3 py-2 text-sm"
+              className={selectClass}
             >
               {IMAGE_SIZE_OPTIONS.map((s) => (
                 <option key={s.value} value={s.value}>
@@ -331,14 +334,14 @@ export function ImageSetView({ id }: { id: string }) {
             </select>
           </div>
           <div>
-            <label htmlFor="quality-select" className="text-muted mb-1 block text-xs">
+            <label htmlFor="quality-select" className="text-ink-secondary mb-1 block text-xs">
               Quality
             </label>
             <select
               id="quality-select"
               value={data.quality}
               onChange={(e) => updateImageSet({ quality: e.target.value })}
-              className="bg-background border-sidebar-border w-full cursor-pointer rounded-md border px-3 py-2 text-sm"
+              className={selectClass}
             >
               {IMAGE_QUALITY_OPTIONS.map((q) => (
                 <option key={q.value} value={q.value}>
@@ -348,7 +351,7 @@ export function ImageSetView({ id }: { id: string }) {
             </select>
           </div>
           <div>
-            <label htmlFor="num-images-range" className="text-muted mb-1 block text-xs">
+            <label htmlFor="num-images-range" className="text-ink-secondary mb-1 block text-xs">
               Number of Images ({data.numImages})
             </label>
             <input
@@ -378,12 +381,13 @@ export function ImageSetView({ id }: { id: string }) {
           key={data.style}
           styleJson={data.style}
           onUpdate={(style) => updateImageSet({ style })}
+          selectClass={selectClass}
         />
 
         <button
           onClick={generate}
           disabled={status === "generating" || !data.prompt}
-          className="bg-accent hover:bg-accent-hover shadow-accent/20 hover:shadow-accent/30 mt-5 w-full cursor-pointer rounded-xl py-3 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:shadow-xl active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+          className="bg-accent hover:bg-accent-hover mt-5 w-full cursor-pointer rounded-xl py-3 text-sm font-semibold text-white transition-colors active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {status === "generating" ? "Generating..." : "Generate Images"}
         </button>
@@ -398,7 +402,7 @@ export function ImageSetView({ id }: { id: string }) {
       </div>
 
       {/* Image Grid */}
-      <div className="bg-card-bg border-sidebar-border/50 rounded-xl border p-6 shadow-sm">
+      <div className="border-edge bg-surface rounded-xl border p-6">
         <ImageGrid
           images={data.images}
           imageSetId={id}
@@ -413,9 +417,11 @@ export function ImageSetView({ id }: { id: string }) {
 function StyleControls({
   styleJson,
   onUpdate,
+  selectClass,
 }: {
   styleJson: string | null;
   onUpdate: (style: string | null) => void;
+  selectClass: string;
 }) {
   const style = parseStyle(styleJson);
   const [customValue, setCustomValue] = useState(style.custom || "");
@@ -432,18 +438,15 @@ function StyleControls({
     }
   }
 
-  const selectClass =
-    "w-full px-3 py-2 bg-background border border-sidebar-border rounded-md text-sm cursor-pointer";
-
   return (
-    <div className="border-sidebar-border mt-4 border-t pt-4">
-      <h3 className="text-muted mb-3 text-xs font-medium">
+    <div className="border-edge mt-4 border-t pt-4">
+      <h3 className="text-ink-secondary mb-3 text-xs font-medium">
         Style Modifiers
         <span className="ml-1 font-normal">— appended to your prompt</span>
       </h3>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div>
-          <label htmlFor="art-style-select" className="text-muted mb-1 block text-xs">
+          <label htmlFor="art-style-select" className="text-ink-secondary mb-1 block text-xs">
             Art Style
           </label>
           <select
@@ -461,7 +464,7 @@ function StyleControls({
           </select>
         </div>
         <div>
-          <label htmlFor="mood-select" className="text-muted mb-1 block text-xs">
+          <label htmlFor="mood-select" className="text-ink-secondary mb-1 block text-xs">
             Mood
           </label>
           <select
@@ -479,7 +482,7 @@ function StyleControls({
           </select>
         </div>
         <div>
-          <label htmlFor="lighting-select" className="text-muted mb-1 block text-xs">
+          <label htmlFor="lighting-select" className="text-ink-secondary mb-1 block text-xs">
             Lighting
           </label>
           <select
@@ -498,7 +501,7 @@ function StyleControls({
         </div>
       </div>
       <div className="mt-3">
-        <label htmlFor="custom-style-input" className="text-muted mb-1 block text-xs">
+        <label htmlFor="custom-style-input" className="text-ink-secondary mb-1 block text-xs">
           Custom Style Instructions
         </label>
         <input
@@ -509,13 +512,13 @@ function StyleControls({
           onBlur={handleCustomBlur}
           onKeyDown={(e) => e.key === "Enter" && handleCustomBlur()}
           placeholder="e.g. with visible brushstrokes, muted color palette, vintage film grain..."
-          className="bg-background border-sidebar-border focus:ring-accent/50 w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
+          className="border-edge bg-inset placeholder:text-ink-faint focus:border-accent focus:ring-accent/30 w-full rounded-lg border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
         />
       </div>
       {(style.artStyle || style.mood || style.lighting || style.custom) && (
-        <div className="text-muted mt-2 text-xs">
+        <div className="text-ink-faint mt-2 text-xs">
           Will append:{" "}
-          <span className="text-foreground">
+          <span className="text-ink">
             {[
               style.artStyle && `Style: ${style.artStyle}`,
               style.mood && `Mood: ${style.mood}`,

@@ -120,15 +120,15 @@ export function ReferenceImages({
           fill="none"
           stroke="currentColor"
           strokeWidth="2.5"
-          className={`text-muted transition-transform duration-200 ${expanded ? "rotate-90" : ""}`}
+          className={`text-ink-faint transition-transform duration-200 ${expanded ? "rotate-90" : ""}`}
         >
           <path d="M9 18l6-6-6-6" />
         </svg>
-        <h2 className="text-foreground/80 text-xs font-semibold tracking-wider uppercase">
+        <h2 className="text-ink-secondary text-xs font-semibold tracking-wider uppercase">
           Reference Images
         </h2>
         {!expanded && referenceImages.length > 0 && (
-          <span className="text-muted text-xs font-normal normal-case">
+          <span className="text-ink-faint text-xs font-normal normal-case">
             ({referenceImages.length})
           </span>
         )}
@@ -137,7 +137,7 @@ export function ReferenceImages({
       {expanded && (
         <div className="mt-3">
           {isDallE && referenceImages.length > 0 && (
-            <div className="mb-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-sm text-amber-600 dark:text-amber-400">
+            <div className="border-warning/20 bg-warning/5 text-warning mb-3 rounded-lg border p-3 text-sm">
               Reference images are not supported with DALL-E models and will be ignored during
               generation. DALL-E models are deprecated (sunset 05/12/2026) — consider switching to a
               GPT Image model for reference image support.
@@ -156,7 +156,7 @@ export function ReferenceImages({
             className={`cursor-pointer rounded-lg border-2 border-dashed p-4 text-center text-sm transition-colors ${
               dragOver
                 ? "border-accent bg-accent/5 text-accent"
-                : "border-sidebar-border text-muted hover:border-accent/50 hover:text-foreground/70"
+                : "border-edge text-ink-faint hover:border-accent/50 hover:text-ink-secondary"
             } ${uploading ? "pointer-events-none opacity-50" : ""}`}
           >
             <input
@@ -195,7 +195,7 @@ export function ReferenceImages({
           </div>
 
           {error && (
-            <div className="mt-2 rounded-lg border border-red-500/20 bg-red-500/10 p-2 text-xs text-red-500">
+            <div className="border-error/20 bg-error/10 text-error mt-2 rounded-lg border p-2 text-xs">
               {error}
             </div>
           )}
@@ -207,7 +207,7 @@ export function ReferenceImages({
                 {referenceImages.map((ref) => (
                   <div
                     key={ref.id}
-                    className="border-sidebar-border group relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border"
+                    className="group border-edge relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border"
                   >
                     <img
                       src={`/api/images/${imageSetId}/${ref.fileName}`}
@@ -230,7 +230,7 @@ export function ReferenceImages({
                   </div>
                 ))}
               </div>
-              <div className="text-muted mt-2 text-xs">
+              <div className="text-ink-faint mt-2 text-xs">
                 {referenceImages.length} file{referenceImages.length !== 1 ? "s" : ""} —{" "}
                 {formatSize(totalSize)}
               </div>
