@@ -82,7 +82,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           });
         }
 
-        // Prepare reference files for gpt-image-1
+        // Prepare reference files for GPT Image models
         let referenceFiles: Awaited<ReturnType<typeof toFile>>[] = [];
         if (hasRefs && !isDallE) {
           referenceFiles = await Promise.all(
@@ -93,26 +93,29 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           );
         }
 
-        for (let i = 0; i < imageSet.numImages; i++) {
-          // Stop generating if the client disconnected
-          if (signal.aborted) {
-            break;
-          }
+        // DALL-E 3 only supports n=1, so loop for it; all other models use n=numImages
+        const isDallE3 = imageModel === "dall-e-3";
+        const batchSize = isDallE3 ? 1 : imageSet.numImages;
+        const iterations = isDallE3 ? imageSet.numImages : 1;
+
+        for (let batch = 0; batch < iterations; batch++) {
+          if (signal.aborted) break;
 
           send("progress", {
-            current: i + 1,
+            current: batch * batchSize + 1,
             total: imageSet.numImages,
-            status: `Generating image ${i + 1} of ${imageSet.numImages}...`,
+            status: isDallE3
+              ? `Generating image ${batch + 1} of ${imageSet.numImages}...`
+              : `Generating ${imageSet.numImages} image${imageSet.numImages > 1 ? "s" : ""}...`,
           });
 
           let response;
           if (referenceFiles.length > 0) {
-            // Use images.edit() with reference images
             response = await openai.images.edit({
               model: imageModel,
               image: referenceFiles,
               prompt,
-              n: 1,
+              n: batchSize,
               size: imageSet.size as "1024x1024" | "1024x1536" | "1536x1024",
               quality: imageSet.quality as "auto" | "low" | "medium" | "high",
             });
@@ -120,7 +123,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             response = await openai.images.generate({
               model: imageModel,
               prompt,
-              n: 1,
+              n: batchSize,
               size: isDallE
                 ? (imageSet.size as "1024x1024")
                 : (imageSet.size as "1024x1024" | "1024x1536" | "1536x1024"),
@@ -131,51 +134,57 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             });
           }
 
-          const imageData = response.data?.[0];
-          if (!imageData?.b64_json) {
-            send("error", { message: `No image data returned for image ${i + 1}` });
-            continue;
-          }
+          // Process all returned images from this API call
+          for (let i = 0; i < (response.data?.length ?? 0); i++) {
+            const imageData = response.data?.[i];
+            if (!imageData?.b64_json) {
+              send("error", {
+                message: `No image data returned for image ${batch * batchSize + i + 1}`,
+              });
+              continue;
+            }
 
-          const timestamp = Date.now();
-          const fileName = `${timestamp}-${i}.png`;
-          const filePath = path.join(dir, fileName);
-          const buffer = Buffer.from(imageData.b64_json, "base64");
-          await fs.writeFile(filePath, buffer);
+            const globalIndex = batch * batchSize + i;
+            const timestamp = Date.now();
+            const fileName = `${timestamp}-${globalIndex}.png`;
+            const filePath = path.join(dir, fileName);
+            const buffer = Buffer.from(imageData.b64_json, "base64");
+            await fs.writeFile(filePath, buffer);
 
-          const imageId = crypto.randomUUID();
-          await db.insert(generatedImages).values({
-            id: imageId,
-            imageSetId: id,
-            filePath,
-            fileName,
-            createdAt: timestamp,
-          });
+            const imageId = crypto.randomUUID();
+            await db.insert(generatedImages).values({
+              id: imageId,
+              imageSetId: id,
+              filePath,
+              fileName,
+              createdAt: timestamp,
+            });
 
-          newImages.push({ id: imageId, fileName });
+            newImages.push({ id: imageId, fileName });
 
-          send("image_saved", {
-            current: i + 1,
-            total: imageSet.numImages,
-            image: { id: imageId, fileName },
-          });
+            send("image_saved", {
+              current: globalIndex + 1,
+              total: imageSet.numImages,
+              image: { id: imageId, fileName },
+            });
 
-          // Auto-optimize if enabled
-          if (autoOptimize) {
-            try {
-              const optimized = await optimizeImage(id, fileName);
-              if (optimized) {
-                send("image_saved", {
-                  current: i + 1,
-                  total: imageSet.numImages,
-                  image: {
-                    id: optimized.id,
-                    fileName: optimized.fileName,
-                  },
-                });
+            // Auto-optimize if enabled
+            if (autoOptimize) {
+              try {
+                const optimized = await optimizeImage(id, fileName);
+                if (optimized) {
+                  send("image_saved", {
+                    current: globalIndex + 1,
+                    total: imageSet.numImages,
+                    image: {
+                      id: optimized.id,
+                      fileName: optimized.fileName,
+                    },
+                  });
+                }
+              } catch (e) {
+                console.warn("Auto-optimize failed:", e instanceof Error ? e.message : e);
               }
-            } catch (e) {
-              console.warn("Auto-optimize failed:", e instanceof Error ? e.message : e);
             }
           }
         }

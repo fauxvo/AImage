@@ -92,7 +92,7 @@ export function ImageSetView({ id }: { id: string }) {
   const [loading, setLoading] = useState(true);
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState("");
-  const [imageModel, setImageModel] = useState("gpt-image-1");
+  const [imageModel, setImageModel] = useState("gpt-image-1-mini");
   const [updateError, setUpdateError] = useState<string | null>(null);
   const router = useRouter();
   const { status, progress, error, warnings, newImages, generate, cancel } = useGeneration(id);
