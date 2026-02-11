@@ -94,11 +94,11 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="bg-sidebar-bg border-sidebar-border flex h-full w-64 flex-col border-r shadow-[2px_0_12px_rgba(0,0,0,0.04)]">
-      <div className="border-sidebar-border border-b p-4">
+    <aside className="border-edge flex h-full w-64 flex-col border-r">
+      <div className="border-edge border-b p-4">
         <button
           onClick={createNew}
-          className="bg-accent hover:bg-accent-hover shadow-accent/20 hover:shadow-accent/30 w-full cursor-pointer rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 active:scale-[0.98]"
+          className="bg-accent hover:bg-accent-hover w-full cursor-pointer rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors active:scale-[0.98]"
         >
           + New Image Set
         </button>
@@ -108,11 +108,11 @@ export function Sidebar() {
         {loading ? (
           <div className="space-y-3 p-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-sidebar-border/50 h-12 animate-pulse rounded-lg" />
+              <div key={i} className="bg-edge/40 h-12 animate-pulse rounded-lg" />
             ))}
           </div>
         ) : imageSets.length === 0 ? (
-          <div className="text-muted p-4 text-center text-sm">No image sets yet</div>
+          <div className="text-ink-faint p-4 text-center text-sm">No image sets yet</div>
         ) : (
           <div className="p-2">
             {imageSets.map((set) => (
@@ -128,10 +128,10 @@ export function Sidebar() {
                   }
                 }}
                 aria-current={activeId === set.id ? "page" : undefined}
-                className={`group flex cursor-pointer items-center justify-between rounded-lg p-3 text-sm transition-all duration-200 ${
+                className={`group flex cursor-pointer items-center justify-between rounded-lg border-l-2 p-3 text-sm transition-colors ${
                   activeId === set.id
-                    ? "bg-accent/10 text-accent border-accent border-l-2"
-                    : "hover:bg-sidebar-border/30 hover:border-sidebar-border border-l-2 border-transparent"
+                    ? "border-accent bg-accent/10 text-accent"
+                    : "hover:bg-surface-hover border-transparent"
                 }`}
               >
                 <div className="min-w-0 flex-1 truncate">
@@ -146,7 +146,7 @@ export function Sidebar() {
                       }}
                       onClick={(e) => e.stopPropagation()}
                       autoFocus
-                      className="bg-background border-accent w-full rounded border px-1 py-0.5 text-sm font-medium focus:outline-none"
+                      className="border-accent bg-inset text-ink w-full rounded border px-1 py-0.5 text-sm font-medium focus:outline-none"
                     />
                   ) : (
                     <>
@@ -156,7 +156,7 @@ export function Sidebar() {
                       >
                         {set.name}
                       </div>
-                      <div className="text-muted text-xs">
+                      <div className="text-ink-faint text-xs">
                         {new Date(set.createdAt).toLocaleDateString()}
                       </div>
                     </>
@@ -165,7 +165,7 @@ export function Sidebar() {
                 <div className="ml-2 flex items-center gap-0.5">
                   <button
                     onClick={(e) => startRename(e, set)}
-                    className="text-muted hover:text-accent cursor-pointer p-1 opacity-0 transition-all group-hover:opacity-100"
+                    className="text-ink-faint hover:text-accent cursor-pointer p-1 opacity-0 transition-all group-hover:opacity-100"
                     title="Rename"
                   >
                     <svg
@@ -181,7 +181,7 @@ export function Sidebar() {
                   </button>
                   <button
                     onClick={(e) => deleteImageSet(e, set.id)}
-                    className="text-muted hover:text-error cursor-pointer p-1 opacity-0 transition-all group-hover:opacity-100"
+                    className="text-ink-faint hover:text-error cursor-pointer p-1 opacity-0 transition-all group-hover:opacity-100"
                     title="Delete"
                   >
                     <svg
@@ -202,13 +202,13 @@ export function Sidebar() {
         )}
       </div>
 
-      <div className="border-sidebar-border border-t p-3">
+      <div className="border-edge border-t p-3">
         <button
           onClick={() => router.push("/settings")}
           className={`flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
             pathname === "/settings"
               ? "bg-accent/10 text-accent"
-              : "text-muted hover:text-foreground hover:bg-sidebar-border/30"
+              : "text-ink-secondary hover:bg-surface-hover hover:text-ink"
           }`}
         >
           <svg

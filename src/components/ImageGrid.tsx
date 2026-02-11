@@ -147,11 +147,11 @@ export function ImageGrid({ images, imageSetId, onOpenFolder, onOptimized }: Ima
   if (images.length === 0) {
     return (
       <div className="py-16 text-center">
-        <div className="text-muted/40 mb-3 text-4xl" aria-hidden="true">
+        <div className="text-ink-faint/40 mb-3 text-4xl" aria-hidden="true">
           &#x1f3a8;
         </div>
-        <p className="text-muted text-sm">No images generated yet.</p>
-        <p className="text-muted/60 mt-1 text-xs">Write a prompt above and click Generate.</p>
+        <p className="text-ink-secondary text-sm">No images generated yet.</p>
+        <p className="text-ink-faint mt-1 text-xs">Write a prompt above and click Generate.</p>
       </div>
     );
   }
@@ -166,13 +166,13 @@ export function ImageGrid({ images, imageSetId, onOpenFolder, onOptimized }: Ima
           <span className="text-sm font-semibold tracking-tight">
             {images.length} image{images.length !== 1 ? "s" : ""}
           </span>
-          <span className="text-muted ml-2 text-xs">
+          <span className="text-ink-faint ml-2 text-xs">
             across {batches.length} generation{batches.length !== 1 ? "s" : ""}
           </span>
         </div>
         <button
           onClick={onOpenFolder}
-          className="border-sidebar-border/60 text-muted hover:text-foreground hover:border-sidebar-border cursor-pointer rounded-lg border px-3 py-1.5 text-xs transition-all active:scale-95"
+          className="border-edge text-ink-secondary hover:border-edge-strong hover:text-ink cursor-pointer rounded-lg border px-3 py-1.5 text-xs transition-colors active:scale-95"
         >
           Open Folder
         </button>
@@ -184,7 +184,7 @@ export function ImageGrid({ images, imageSetId, onOpenFolder, onOptimized }: Ima
           <div key={batch.timestamp}>
             {/* Batch header */}
             <div className="mb-4 flex items-center gap-3">
-              <span className="text-foreground/80 text-sm font-medium">
+              <span className="text-ink-secondary text-sm font-medium">
                 {formatDate(batch.timestamp)}
               </span>
               {batchIdx === 0 && batches.length > 1 && (
@@ -192,10 +192,10 @@ export function ImageGrid({ images, imageSetId, onOpenFolder, onOptimized }: Ima
                   Latest
                 </span>
               )}
-              <span className="text-muted/60 text-xs">
+              <span className="text-ink-faint text-xs">
                 {batch.images.length} image{batch.images.length !== 1 ? "s" : ""}
               </span>
-              <div className="border-sidebar-border/40 flex-1 border-b" />
+              <div className="border-edge flex-1 border-b" />
             </div>
 
             {/* Image grid */}
@@ -216,10 +216,10 @@ export function ImageGrid({ images, imageSetId, onOpenFolder, onOptimized }: Ima
                       }
                     }}
                     aria-label={`View ${isOptimized ? "optimized" : "generated"} image`}
-                    className="group/img hover:border-accent/20 relative cursor-pointer overflow-hidden rounded-xl border border-transparent shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+                    className="group/img border-edge hover:border-accent/30 relative cursor-pointer overflow-hidden rounded-xl border transition-all duration-300 hover:scale-[1.02]"
                     style={{ animationDelay: `${imgIdx * 50}ms` }}
                   >
-                    <div className="bg-sidebar-border/20 aspect-square overflow-hidden">
+                    <div className="bg-edge/20 aspect-square overflow-hidden">
                       <img
                         src={url}
                         alt={isOptimized ? "Optimized" : "Generated"}
@@ -231,7 +231,7 @@ export function ImageGrid({ images, imageSetId, onOpenFolder, onOptimized }: Ima
                     {/* Gradient overlay on hover */}
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover/img:opacity-100" />
 
-                    {/* Optimized badge */}
+                    {/* Optimized badge — hardcoded emerald, intentionally independent of theme accent */}
                     {isOptimized && (
                       <span className="absolute bottom-2.5 left-2.5 flex items-center gap-1 rounded-full bg-emerald-500/90 px-2 py-1 text-[11px] font-semibold tracking-wide text-white shadow-lg backdrop-blur-md">
                         <svg
@@ -251,7 +251,7 @@ export function ImageGrid({ images, imageSetId, onOpenFolder, onOptimized }: Ima
                     {/* Copy URL button */}
                     <button
                       onClick={(e) => copyUrl(e, url, img.id)}
-                      className="absolute top-2.5 right-2.5 cursor-pointer rounded-lg border border-white/20 bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white opacity-0 shadow-lg backdrop-blur-md transition-all duration-200 group-hover/img:opacity-100 hover:bg-white/20 active:scale-95"
+                      className="absolute top-2.5 right-2.5 cursor-pointer rounded-lg bg-black/60 px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg backdrop-blur-md transition-all duration-200 group-hover/img:opacity-100 hover:bg-black/75 active:scale-95"
                       title="Copy image URL"
                     >
                       {copiedId === img.id ? "Copied!" : "Copy URL"}
@@ -300,7 +300,7 @@ export function ImageGrid({ images, imageSetId, onOpenFolder, onOptimized }: Ima
 
             {/* Bottom control bar */}
             <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3">
-              {/* Optimize result banner */}
+              {/* Optimize result banner — hardcoded emerald, intentionally independent of theme accent */}
               {optimizeResult && (
                 <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/90 px-4 py-2.5 text-center text-xs font-semibold text-white shadow-xl backdrop-blur-md">
                   Optimized! {formatBytes(optimizeResult.originalSize)} &rarr;{" "}
@@ -324,6 +324,7 @@ export function ImageGrid({ images, imageSetId, onOpenFolder, onOptimized }: Ima
                 >
                   Open in Tab
                 </a>
+                {/* Optimize button — hardcoded emerald, intentionally independent of theme accent */}
                 {!lightboxImg.fileName.includes("_optimized") && (
                   <button
                     onClick={optimizeImage}

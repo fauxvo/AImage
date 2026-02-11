@@ -27,7 +27,7 @@ export function GenerationProgress({
           {warnings.map((w, i) => (
             <div
               key={i}
-              className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-600 dark:text-amber-400"
+              className="border-warning/20 bg-warning/10 text-warning rounded-lg border p-3 text-sm"
             >
               {w}
             </div>
@@ -36,20 +36,20 @@ export function GenerationProgress({
       )}
 
       {status === "generating" && (
-        <div className="bg-accent/5 border-accent/20 rounded-lg border p-4">
+        <div className="border-accent/20 bg-accent/5 rounded-lg border p-4">
           <div className="mb-2 flex items-center justify-between">
             <span className="text-sm font-medium">
               {progress?.status || "Starting generation..."}
             </span>
             <button
               onClick={onCancel}
-              className="text-muted hover:text-error cursor-pointer text-xs transition-colors"
+              className="text-ink-faint hover:text-error cursor-pointer text-xs transition-colors"
             >
               Cancel
             </button>
           </div>
           {progress && (
-            <div className="bg-sidebar-border h-2 w-full rounded-full">
+            <div className="bg-edge h-2 w-full rounded-full">
               <div
                 className="bg-accent h-2 rounded-full transition-all duration-300"
                 style={{
@@ -62,13 +62,13 @@ export function GenerationProgress({
       )}
 
       {status === "complete" && (
-        <div className="bg-success/10 border-success/20 text-success rounded-lg border p-3 text-sm">
+        <div className="border-success/20 bg-success/10 text-success rounded-lg border p-3 text-sm">
           Generation complete!
         </div>
       )}
 
       {status === "error" && (
-        <div className="bg-error/10 border-error/20 text-error rounded-lg border p-3 text-sm">
+        <div className="border-error/20 bg-error/10 text-error rounded-lg border p-3 text-sm">
           {error || "Generation failed"}
         </div>
       )}

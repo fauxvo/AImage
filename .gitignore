@@ -41,6 +41,11 @@ generated-images/
 sqlite.db
 sqlite.db-shm
 sqlite.db-wal
+*.db-shm
+*.db-wal
+
+# design system (local dev tool)
+.interface-design/
 
 # typescript
 *.tsbuildinfo
