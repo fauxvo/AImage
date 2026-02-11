@@ -138,8 +138,9 @@ export function ReferenceImages({
         <div className="mt-3">
           {isDallE && referenceImages.length > 0 && (
             <div className="mb-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-sm text-amber-600 dark:text-amber-400">
-              Reference images are not supported with DALL-E models. They will be ignored during
-              generation.
+              Reference images are not supported with DALL-E models and will be ignored during
+              generation. DALL-E models are deprecated (sunset 05/12/2026) — consider switching to a
+              GPT Image model for reference image support.
             </div>
           )}
 

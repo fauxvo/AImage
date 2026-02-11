@@ -9,7 +9,7 @@ export function Settings() {
   const [loading, setLoading] = useState(true);
   const [autoOptimize, setAutoOptimize] = useState(true);
   const [chatModel, setChatModel] = useState("gpt-4o-mini");
-  const [imageModel, setImageModel] = useState("gpt-image-1");
+  const [imageModel, setImageModel] = useState("gpt-image-1-mini");
   const [apiKey, setApiKey] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -34,7 +34,7 @@ export function Settings() {
         setData(result);
         setAutoOptimize(result.settings["auto_optimize"] !== "false");
         setChatModel(result.settings["chat_model"] || "gpt-4o-mini");
-        setImageModel(result.settings["image_model"] || "gpt-image-1");
+        setImageModel(result.settings["image_model"] || "gpt-image-1-mini");
       }
     } finally {
       setLoading(false);
@@ -229,14 +229,17 @@ export function Settings() {
           >
             {IMAGE_MODELS.map((m) => (
               <option key={m.value} value={m.value}>
-                {m.label} — {m.description}
+                {"deprecated" in m
+                  ? `${m.label} [DEPRECATED] — ${m.description}`
+                  : `${m.label} — ${m.description}`}
               </option>
             ))}
           </select>
-          {imageModel.startsWith("dall-e") && (
-            <p className="text-muted mt-2 text-xs">
-              Note: DALL-E models only support 1024x1024 size. Other size settings will be ignored.
-            </p>
+          {IMAGE_MODELS.find((m) => m.value === imageModel && "deprecated" in m) && (
+            <div className="mt-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-sm text-amber-600 dark:text-amber-400">
+              This model is deprecated and will be removed on 05/12/2026. Only 1024x1024 size is
+              supported. Consider switching to a GPT Image model for the best results.
+            </div>
           )}
         </div>
       </div>

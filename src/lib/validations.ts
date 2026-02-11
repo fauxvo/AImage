@@ -53,21 +53,32 @@ export const IMAGE_QUALITY_OPTIONS = [
 
 export const IMAGE_MODELS = [
   {
+    value: "gpt-image-1.5" satisfies ImageModel,
+    label: "GPT Image 1.5",
+    description: "State-of-the-art image generation (recommended)",
+  },
+  {
+    value: "gpt-image-1" satisfies ImageModel,
+    label: "GPT Image 1",
+    description: "High quality image generation",
+  },
+  {
     value: "gpt-image-1-mini" satisfies ImageModel,
     label: "GPT Image 1 Mini",
     description: "Fast and affordable image generation",
   },
   {
-    value: "gpt-image-1" satisfies ImageModel,
-    label: "GPT Image 1",
-    description: "Highest quality image generation",
-  },
-  {
     value: "dall-e-3" satisfies ImageModel,
     label: "DALL-E 3",
     description: "High quality, creative images",
+    deprecated: "Sunset 05/12/2026",
   },
-  { value: "dall-e-2" satisfies ImageModel, label: "DALL-E 2", description: "Faster, lower cost" },
+  {
+    value: "dall-e-2" satisfies ImageModel,
+    label: "DALL-E 2",
+    description: "Faster, lower cost",
+    deprecated: "Sunset 05/12/2026",
+  },
 ] as const;
 
 export const CHAT_MODELS = [

@@ -139,6 +139,10 @@ describe("POST /api/image-sets/:id/generate", () => {
   it("generates multiple images when numImages > 1", async () => {
     setupDbForGeneration({ ...baseSet, numImages: 3 });
     (getSetting as any).mockResolvedValueOnce("false").mockResolvedValueOnce(null);
+    // With n>1 optimization, a single API call returns all images
+    mockOpenAIClient.images.generate.mockResolvedValue({
+      data: [{ b64_json: b64 }, { b64_json: b64 }, { b64_json: b64 }],
+    });
 
     const res = await POST(createRequest("/g", { method: "POST" }), createParams({ id: "set-1" }));
     const events = await readSSEEvents(res);
